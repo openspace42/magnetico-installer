@@ -1,0 +1,1 @@
+# magnetico-installer
