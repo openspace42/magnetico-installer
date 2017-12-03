@@ -1,0 +1,132 @@
+#!/bin/bash
+
+runtimeuser=openspace
+
+r=`tput setaf 1`
+g=`tput setaf 2`
+x=`tput sgr0`
+b=`tput bold`
+
+set -e
+set -u
+
+if [[ $EUID -ne 0 ]]
+then
+	echo "${r}${b}This script must be run as root. Run it as:${x}"
+	echo
+	echo "sudo bash aenigma/install.sh"
+	echo
+	echo "${b}Exiting...${x}"
+	echo
+	exit
+fi
+
+if [ "`lsb_release -d | sed 's/.*:\s*//' | sed 's/16\.04\.[0-9]/16.04/' `" != "Ubuntu 16.04 LTS" ]
+then
+	echo "${r}${b}aenigma only runs on Ubuntu 16.04. You are running:${x}"
+	echo
+	lsb_release -d | sed 's/.*:\s*//'
+	echo
+	exit
+fi
+
+if [ -f /root/os-dfbs/run-ok ]
+then
+        echo "${g}${b}Debian First Boot Setup was previously run successfully. Continuing...${x}"
+        echo
+else
+	echo "${r}${b}Debian First Boot Setup was NOT previously run successfully OR the system was not rebooted at the end.${x}"
+	echo
+	read -p "${b}Run it now? (Y/n): ${x}" -n 1 -r
+	echo
+	if [[ ! $REPLY =~ ^[Nn]$ ]]
+	then
+		echo "${b}Ok, running DFBS now...${x}"
+		echo
+		echo "${b}After you're done running DFBS [make sure you reboot this machine at the end], simply run the aenigma installer again.${x}"
+		echo
+		sleep 3
+		if [ -d "/root/Debian-First-Boot-Setup" ]
+		then
+			rm -r "/root/Debian-First-Boot-Setup"
+		fi
+		git clone https://github.com/openspace42/Debian-First-Boot-Setup
+		clear
+		bash Debian-First-Boot-Setup/script.sh
+		exit
+	else
+		echo "${b}No problem, you can run it [make sure you reboot this machine at the end] by executing the following commands:${x}"
+		echo
+		echo "${b} | git clone https://github.com/openspace42/Debian-First-Boot-Setup |${x}"
+		echo
+		echo "${b} | bash Debian-First-Boot-Setup/script.sh |${x}"
+		echo
+		echo "${b}Exiting...${x}"
+		echo
+		exit
+	fi
+fi
+
+################################################################################
+
+
+
+echo "${b}Now installing dependencies...${x}"
+echo
+apt-get update
+apt-get -y install python-boto python3-pip
+pip install --upgrade pip
+pip install boto
+echo "${b}Finished installing dependencies.${x}"
+echo
+
+
+
+echo "${b}Now installing magneticod...${x}"
+echo
+
+ufw allow 64879
+iptables -I OUTPUT -t raw -p udp --sport 64879 -j NOTRACK
+iptables -I PREROUTING -t raw -p udp --dport 64879 -j NOTRACK
+
+su - $runtimeuser <<'EOF'
+pip3 install magneticod --user
+export PATH=$PATH:~/.local/bin
+source ~/.profile
+EOF
+
+wget https://raw.githubusercontent.com/boramalper/magnetico/master/magneticod/systemd/magneticod.service
+sed -i "s|ExecStart=~/|ExecStart=/home/${runtimeuser}/|g" magneticod.service
+sed -i "s|PORT_NUMBER|64879|g" magneticod.service
+sed -i "/\[Service\]/a User=${runtimeuser}" magneticod.service
+
+mv magneticod.service /etc/systemd/system/
+systemctl daemon-reload
+/usr/sbin/service magneticod restart
+
+echo "${b}Finished installing magneticod.${x}"
+echo
+
+echo "${b}Now installing magneticow...${x}"
+echo
+
+su - $runtimeuser <<'EOF'
+pip3 install magneticow --user
+export PATH=$PATH:~/.local/bin
+source ~/.profile
+EOF
+
+https://raw.githubusercontent.com/boramalper/magnetico/master/magneticow/systemd/magneticow.service
+sed -i "s|ExecStart=~/|ExecStart=/home/${runtimeuser}/|g" magneticow.service
+sed -i "s|PORT|8080|g" magneticow.service
+sed -i "s|USERNAME|${runtimeuser}|g" magneticow.service
+genpw="$(pwgen -sy 42 1)"
+sed -i "s|PASSWORD|\"${genpw}\"|g" magneticow.service
+sed -i "/\[Service\]/a User=${runtimeuser}" magneticow.service
+
+mv magneticow.service /etc/systemd/system/
+systemctl daemon-reload
+/usr/sbin/service magneticow restart
+
+echo "${b}Finished installing magneticow.${x}"
+echo
