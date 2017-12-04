@@ -1,6 +1,11 @@
 #!/bin/bash
 
+# Don't change | No trailing slash
+
+sourcedir=/root/magnetico-installer
+
 runtimeuser=openspace
+hostname=`hostname`
 
 r=`tput setaf 1`
 g=`tput setaf 2`
@@ -74,7 +79,7 @@ fi
 echo "${b}Now installing dependencies...${x}"
 echo
 apt-get update
-apt-get -y install python-boto python3-pip
+apt-get -y install python-boto python3-pip ufw fail2ban pwgen
 pip install --upgrade pip
 pip install boto
 echo "${b}Finished installing dependencies.${x}"
@@ -82,10 +87,18 @@ echo
 
 
 
+echo "${b}Now setting UFW rules...${x}"
+echo
+ufw allow 64879
+echo
+echo "${b}Finished setting UFW rules.${x}"
+echo
+
+
+
 echo "${b}Now installing magneticod...${x}"
 echo
 
-ufw allow 64879
 iptables -I OUTPUT -t raw -p udp --sport 64879 -j NOTRACK
 iptables -I PREROUTING -t raw -p udp --dport 64879 -j NOTRACK
 
@@ -102,10 +115,14 @@ sed -i "/\[Service\]/a User=${runtimeuser}" magneticod.service
 
 mv magneticod.service /etc/systemd/system/
 systemctl daemon-reload
+systemctl start magneticod
+systemctl enable magneticod
 /usr/sbin/service magneticod restart
 
 echo "${b}Finished installing magneticod.${x}"
 echo
+
+
 
 echo "${b}Now installing magneticow...${x}"
 echo
@@ -116,7 +133,7 @@ export PATH=$PATH:~/.local/bin
 source ~/.profile
 EOF
 
-https://raw.githubusercontent.com/boramalper/magnetico/master/magneticow/systemd/magneticow.service
+wget https://raw.githubusercontent.com/boramalper/magnetico/master/magneticow/systemd/magneticow.service
 sed -i "s|ExecStart=~/|ExecStart=/home/${runtimeuser}/|g" magneticow.service
 sed -i "s|PORT|8080|g" magneticow.service
 sed -i "s|USERNAME|${runtimeuser}|g" magneticow.service
@@ -126,7 +143,22 @@ sed -i "/\[Service\]/a User=${runtimeuser}" magneticow.service
 
 mv magneticow.service /etc/systemd/system/
 systemctl daemon-reload
+systemctl start magneticow
+systemctl enable magneticow
 /usr/sbin/service magneticow restart
 
 echo "${b}Finished installing magneticow.${x}"
+echo
+
+
+
+echo "${g}${b}All done! You can now log in on:${x}"
+echo
+echo "${b} http://$hostname:8080${x}"
+echo
+echo "${b} |  user: $runtimeuser${x}"
+echo
+echo "${b} |  pass: $genpw${x}"
+echo
+echo "${b}Exiting installer...${x}"
 echo
