@@ -15,6 +15,7 @@ b=`tput bold`
 set -e
 set -u
 
+echo
 echo "${b}Now initiating installer...${x}"
 echo
 
@@ -171,20 +172,27 @@ then
 		cp /etc/nginx/sites-available/streisand /etc/nginx/sites-available/magnetico
 		sed -i "s|127.0.0.1|10.8.0.1|g" /etc/nginx/sites-available/magnetico
 		sed -i "/auth_basic/d" /etc/nginx/sites-available/magnetico
+		if [ -f /etc/nginx/sites-enabled/magnetico ]
+		then
+			rm /etc/nginx/sites-enabled/magnetico
+		fi
 		ln -s /etc/nginx/sites-available/magnetico /etc/nginx/sites-enabled/magnetico
 		service nginx restart
 		echo "host-record=$hostname,10.8.0.1" > /etc/dnsmasq.d/magnetico
 		service dnsmasq restart
 		ufw delete allow 8080
-		echo "${b}Finished overriding the | $hostname | site. You can now log in on:${x}"
 		echo
-		echo "${b} https://$hostname [when connected via VPN to this machine]${x}"
+		echo "${b}Finished overriding the | $hostname | site.${x}"
 		echo
-		echo "${b} |  user: $runtimeuser${x}"
+		echo "${g}${b}You can now log in on:${x}"
 		echo
-		echo "${b} |  pass: $genpw${x}"
+		echo "${b}  https://$hostname [when connected via VPN to this machine]${x}"
 		echo
-		read -p "${b}Also exessively harden this machine by removing the public streisand web interface and the Tor hidden service? (Y/n): ${x}" -n 1 -r
+		echo "${b}  |  user: $runtimeuser${x}"
+		echo
+		echo "${b}  |  pass: $genpw${x}"
+		echo
+		read -p "${b}Also exessively harden this machine by removing the public streisand web interface entirely and the Tor hidden service? (Y/n): ${x}" -n 1 -r
 		echo
 		if [[ ! $REPLY =~ ^[Nn]$ ]]
 		then
@@ -206,16 +214,17 @@ then
 			echo
 		fi
 	else
-		echo "${b}Ok, skipping.${x}"
+		echo "${b}Ok, skipping. All done!${x}"
 		echo
-		echo "${g}${b}All done! You can now log in on:${x}"
+		echo "${g}${b}You can now log in on:${x}"
 		echo
-		echo "${b} http://$hostname:8080${x}"
+		echo "${b}  http://$hostname:8080${x}"
 		echo
-		echo "${b} |  user: $runtimeuser${x}"
+		echo "${b}  |  user: $runtimeuser${x}"
 		echo
-		echo "${b} |  pass: $genpw${x}"
+		echo "${b}  |  pass: $genpw${x}"
 		echo
+	fi
 fi
 
 
