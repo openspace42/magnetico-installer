@@ -172,6 +172,7 @@ then
 		cp /etc/nginx/sites-available/streisand /etc/nginx/sites-available/magnetico
 		sed -i "s|127.0.0.1|10.8.0.1|g" /etc/nginx/sites-available/magnetico
 		sed -i "/auth_basic/d" /etc/nginx/sites-available/magnetico
+		sed -i "/autoindex off;/ r $sourcedir/magnetico-nginx-append" /etc/nginx/sites-available/magnetico
 		if [ -f /etc/nginx/sites-enabled/magnetico ]
 		then
 			rm /etc/nginx/sites-enabled/magnetico
