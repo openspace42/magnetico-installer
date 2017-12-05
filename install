@@ -229,5 +229,15 @@ fi
 
 
 
+echo "${b}Now removing installer directory...${x}"
+echo
+echo "Run ${b}git clone https://github.com/openspace42/magnetico-installer${x} once again to download the latest installer!"
+echo
+rm -r magnetico-installer
+echo "${b}Finished removing installer directory...${x}"
+echo
+
+
+
 echo "${b}Finished installing. Exiting installer...${x}"
 echo
