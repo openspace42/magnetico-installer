@@ -124,7 +124,6 @@ systemctl start magneticod
 systemctl enable magneticod
 /usr/sbin/service magneticod restart
 
-echo
 echo "${b}Finished installing magneticod.${x}"
 echo
 
@@ -153,7 +152,6 @@ systemctl start magneticow
 systemctl enable magneticow
 /usr/sbin/service magneticow restart
 
-echo
 echo "${b}Finished installing magneticow.${x}"
 echo
 
