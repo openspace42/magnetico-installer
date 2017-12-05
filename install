@@ -15,6 +15,9 @@ b=`tput bold`
 set -e
 set -u
 
+echo "${b}Now initiating installer...${x}"
+echo
+
 if [[ $EUID -ne 0 ]]
 then
 	echo "${r}${b}This script must be run as root. Run it as:${x}"
@@ -80,8 +83,9 @@ echo "${b}Now installing dependencies...${x}"
 echo
 apt-get update
 apt-get -y install python-boto python3-pip ufw fail2ban pwgen
-pip install --upgrade pip
-pip install boto
+pip3 install --upgrade pip
+pip3 install boto
+echo
 echo "${b}Finished installing dependencies.${x}"
 echo
 
@@ -119,6 +123,7 @@ systemctl start magneticod
 systemctl enable magneticod
 /usr/sbin/service magneticod restart
 
+echo
 echo "${b}Finished installing magneticod.${x}"
 echo
 
@@ -137,7 +142,7 @@ wget https://raw.githubusercontent.com/boramalper/magnetico/master/magneticow/sy
 sed -i "s|ExecStart=~/|ExecStart=/home/${runtimeuser}/|g" magneticow.service
 sed -i "s|PORT|8080|g" magneticow.service
 sed -i "s|USERNAME|${runtimeuser}|g" magneticow.service
-genpw="$(pwgen -sy 42 1)"
+genpw="$(pwgen -s 42 1)"
 sed -i "s|PASSWORD|\"${genpw}\"|g" magneticow.service
 sed -i "/\[Service\]/a User=${runtimeuser}" magneticow.service
 
@@ -147,18 +152,67 @@ systemctl start magneticow
 systemctl enable magneticow
 /usr/sbin/service magneticow restart
 
+echo
 echo "${b}Finished installing magneticow.${x}"
 echo
 
 
 
-echo "${g}${b}All done! You can now log in on:${x}"
-echo
-echo "${b} http://$hostname:8080${x}"
-echo
-echo "${b} |  user: $runtimeuser${x}"
-echo
-echo "${b} |  pass: $genpw${x}"
-echo
-echo "${b}Exiting installer...${x}"
+if [ -f /etc/nginx/sites-available/streisand ]
+then
+	echo "${g}${b}Streisand instance detected.${x}"
+	echo
+	read -p "${b}Also override the | $hostname | site pointing it to magneticow when accessing it from inside the VPN? (Y/n): ${x}" -n 1 -r
+	echo
+	if [[ ! $REPLY =~ ^[Nn]$ ]]
+	then
+		echo "${b}Ok, proceeding...${x}"
+		echo
+		cp /etc/nginx/sites-available/streisand /etc/nginx/sites-available/magnetico
+		sed -i "s|127.0.0.1|10.8.0.1|g" /etc/nginx/sites-available/magnetico
+		sed -i "/auth_basic/d" /etc/nginx/sites-available/magnetico
+		ln -s /etc/nginx/sites-available/magnetico /etc/nginx/sites-enabled/magnetico
+		service nginx restart
+		echo "host-record=$hostname,10.8.0.1" > /etc/dnsmasq.d/magnetico
+		service dnsmasq restart
+		ufw delete allow 8080
+		echo "${b}Finished overriding the | $hostname | site. You can now log in on:${x}"
+		echo
+		echo "${b} https://$hostname [when connected via VPN to this machine]${x}"
+		echo
+		echo "${b} |  user: $runtimeuser${x}"
+		echo
+		echo "${b} |  pass: $genpw${x}"
+		echo
+		read -p "${b}Also exessively harden this machine by removing the public streisand web interface and the Tor hidden service? (Y/n): ${x}" -n 1 -r
+		echo
+		if [[ ! $REPLY =~ ^[Nn]$ ]]
+		then
+			echo "${b}Ok, proceeding...${x}"
+			echo
+			rm /etc/nginx/sites-enabled/streisand
+			rm /etc/nginx/sites-enabled/streisand-hidden-service
+			service nginx reload
+			echo "${b}Finished hardening this machine. You can now only access it via SSH or VPN.${x}"
+			echo
+		else
+			echo "${b}Ok, skipping.${x}"
+			echo
+		fi
+	else
+		echo "${b}Ok, skipping.${x}"
+		echo
+		echo "${g}${b}All done! You can now log in on:${x}"
+		echo
+		echo "${b} http://$hostname:8080${x}"
+		echo
+		echo "${b} |  user: $runtimeuser${x}"
+		echo
+		echo "${b} |  pass: $genpw${x}"
+		echo
+fi
+
+
+
+echo "${b}Finished installing. Exiting installer...${x}"
 echo
