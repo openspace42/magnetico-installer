@@ -190,8 +190,14 @@ then
 		then
 			echo "${b}Ok, proceeding...${x}"
 			echo
-			rm /etc/nginx/sites-enabled/streisand
-			rm /etc/nginx/sites-enabled/streisand-hidden-service
+			if [ -f /etc/nginx/sites-enabled/streisand ]
+			then
+				rm /etc/nginx/sites-enabled/streisand
+			fi
+			if [ -f /etc/nginx/sites-enabled/streisand-hidden-service ]
+			then
+				rm /etc/nginx/sites-enabled/streisand-hidden-service
+			fi
 			service nginx reload
 			echo "${b}Finished hardening this machine. You can now only access it via SSH or VPN.${x}"
 			echo
