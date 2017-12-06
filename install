@@ -4,7 +4,6 @@
 
 sourcedir=/root/magnetico-installer
 
-runtimeuser=openspace
 hostname=`hostname`
 
 r=`tput setaf 1`
@@ -30,15 +29,6 @@ then
 	exit
 fi
 
-if [ "`lsb_release -d | sed 's/.*:\s*//' | sed 's/16\.04\.[0-9]/16.04/' `" != "Ubuntu 16.04 LTS" ]
-then
-	echo "${r}${b}aenigma only runs on Ubuntu 16.04. You are running:${x}"
-	echo
-	lsb_release -d | sed 's/.*:\s*//'
-	echo
-	exit
-fi
-
 if [ -f /root/os-dfbs/run-ok ]
 then
         echo "${g}${b}Debian First Boot Setup was previously run successfully. Continuing...${x}"
@@ -52,7 +42,7 @@ else
 	then
 		echo "${b}Ok, running DFBS now...${x}"
 		echo
-		echo "${b}After you're done running DFBS [make sure you reboot this machine at the end], simply run the aenigma installer again.${x}"
+		echo "${b}After you're done running DFBS [make sure you reboot this machine at the end], simply run the installer again.${x}"
 		echo
 		sleep 3
 		if [ -d "/root/Debian-First-Boot-Setup" ]
@@ -76,7 +66,141 @@ else
 	fi
 fi
 
+if id "$runtimeuser" >/dev/null 2>&1
+then
+        if [ -d /home/$runtimeuser ]
+	then
+		echo "${g}${b}$runtimeuser user and home directory found.${x}"
+		echo
+else
+        echo "user does not exist"
+fi
+
 ################################################################################
+
+
+
+echo "${b}Magnetico must run as a different user than root.${x}"
+echo
+echo "${b}Here are the current non-root full users in this system:${x}"
+echo
+currusers="$(cat /etc/passwd | cut -d: -f 1,3,6 | grep "[1-9][0-9][0-9][0-9]" | grep "/home" | cut -d: -f1)"
+echo $currusers
+echo
+read -p "${b}Use an existing user? (Y/n): ${x}" -n 1 -r
+echo
+if [[ ! $REPLY =~ ^[Nn]$ ]]
+then
+	defined=n
+	until [ $defined = "y" ]
+	do
+		exists=n
+		until [ $exists = "y" ]
+		do
+			runtimeuser=""
+			until [ ! $runtimeuser = "" ]
+			do
+				read -p "${b}Ok, now specify the existing user under whom to install magnetico: ${x}" runtimeuser
+				echo
+			done
+			if [ -d /home/$runtimeuser ]
+			then
+				exists=y
+			else
+				echo "${r}${b}The specified user does not exist or is not a full user with home directory. Please retry...${x}"
+				echo
+				exists=n
+			fi
+		done
+		valid=n
+		until [ $valid = "y" ]
+		do
+			read -n 1 -p "${b}Is | $runtimeuser | correct? (Y/n/e[xit]) ${x}" answer;
+			case $answer in
+			"")
+				echo
+				valid=y
+				defined=y
+				;;
+			y)
+				echo -e "\n"
+				valid=y
+				defined=y
+				;;
+			n)
+				echo -e "\n"
+				echo "${b}Ok, then please try again...${x}"
+				echo
+				valid=y
+				defined=n
+				;;
+			e)
+				echo -e "\n"
+	        		echo "${b}Exiting...${x}"
+	        		echo
+	        		exit
+	        		;;
+			*)
+				echo -e "\n"
+				echo "${r}${b}Invalid option. Retry...${x}"
+	        		echo
+				valid=n
+			defined=n
+		        ;;
+			esac
+		done
+	done
+else
+	defined=n
+	until [ $defined = "y" ]
+	do
+		runtimeuser=""
+		until [ ! $runtimeuser = "" ]
+		do
+			read -p "${b}Ok, adding user now. Specify the new user's username: ${x}" runtimeuser
+			echo
+		done
+		valid=n
+		until [ $valid = "y" ]
+		do
+			read -n 1 -p "${b}Is | $runtimeuser | correct? (Y/n/e[xit]) ${x}" answer;
+			case $answer in
+			"")
+				echo
+				valid=y
+				defined=y
+				;;
+			y)
+				echo -e "\n"
+				valid=y
+				defined=y
+				;;
+			n)
+				echo -e "\n"
+				echo "${b}Ok, then please try again...${x}"
+				echo
+				valid=y
+				defined=n
+				;;
+			e)
+				echo -e "\n"
+	        		echo "${b}Exiting...${x}"
+	        		echo
+	        		exit
+	        		;;
+			*)
+				echo -e "\n"
+				echo "${r}${b}Invalid option. Retry...${x}"
+	        		echo
+				valid=n
+			defined=n
+		        ;;
+			esac
+		done
+	done
+	adduser --disabled-password --gecos "" $username
+	usermod -aG sudo $username
+fi
 
 
 
