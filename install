@@ -4,10 +4,13 @@
 
 sourcedir=/root/magnetico-installer
 
+scriptname=`basename "$0"`
 hostname=`hostname`
 
 r=`tput setaf 1`
 g=`tput setaf 2`
+l=`tput setaf 4`
+m=`tput setaf 5`
 x=`tput sgr0`
 b=`tput bold`
 
@@ -22,7 +25,7 @@ if [[ $EUID -ne 0 ]]
 then
 	echo "${r}${b}This script must be run as root. Run it as:${x}"
 	echo
-	echo "sudo bash aenigma/install.sh"
+	echo "${b}sudo bash $sourcedir/$scriptname${x}"
 	echo
 	echo "${b}Exiting...${x}"
 	echo
@@ -347,7 +350,7 @@ echo "${b}Now removing installer directory...${x}"
 echo
 echo "Run ${b}git clone https://github.com/openspace42/magnetico-installer${x} once again to download the latest installer!"
 echo
-rm -r magnetico-installer
+rm -r $sourcedir
 echo "${b}Finished removing installer directory...${x}"
 echo
 
