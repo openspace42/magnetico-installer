@@ -277,6 +277,18 @@ echo
 
 
 
+echo "${b}Now adding magneticod restart script to daily crontab...${x}"
+echo
+touch /etc/cron.daily/magneticod-restart
+chmod 755 /etc/cron.daily/magneticod-restart
+echo -e '#!/bin/bash' > /etc/cron.daily/magneticod-restart
+echo >> /etc/cron.daily/magneticod-restart
+echo "/usr/sbin/service magneticod restart" >> /etc/cron.daily/magneticod-restart
+echo "${b}Finished adding magneticod restart script to daily crontab...${x}"
+echo
+
+
+
 if [ -f /etc/nginx/sites-available/streisand ]
 then
 	echo "${g}${b}Streisand instance detected.${x}"
