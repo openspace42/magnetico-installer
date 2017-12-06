@@ -141,6 +141,7 @@ then
 		done
 	done
 else
+	echo
 	defined=n
 	until [ $defined = "y" ]
 	do
@@ -188,8 +189,8 @@ else
 			esac
 		done
 	done
-	adduser --disabled-password --gecos "" $username
-	usermod -aG sudo $username
+	adduser --disabled-password --gecos "" $runtimeuser
+	usermod -aG sudo $runtimeuser
 fi
 
 
