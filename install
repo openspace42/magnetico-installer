@@ -66,16 +66,6 @@ else
 	fi
 fi
 
-if id "$runtimeuser" >/dev/null 2>&1
-then
-        if [ -d /home/$runtimeuser ]
-	then
-		echo "${g}${b}$runtimeuser user and home directory found.${x}"
-		echo
-else
-        echo "user does not exist"
-fi
-
 ################################################################################
 
 
