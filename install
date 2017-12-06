@@ -1,8 +1,10 @@
 #!/bin/bash
 
 # Don't change | No trailing slash
-
-sourcedir=/root/magnetico-installer
+projname="magnetico-installer"
+sourcedir=/root/$projname
+basedir=/root/openspace42
+installdir=$basedir/magnetico
 
 scriptname=`basename "$0"`
 hostname=`hostname`
@@ -32,7 +34,7 @@ then
 	exit
 fi
 
-if [ -f /root/os-dfbs/run-ok ]
+if [ -f $basedir/DFBS/run-ok ]
 then
         echo "${g}${b}Debian First Boot Setup was previously run successfully. Continuing...${x}"
         echo
