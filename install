@@ -214,6 +214,7 @@ echo
 
 echo "${b}Now setting UFW rules...${x}"
 echo
+ufw allow 8080
 ufw allow 64879
 echo
 echo "${b}Finished setting UFW rules.${x}"
@@ -356,6 +357,17 @@ then
 		echo "${b}  |  pass: $genpw${x}"
 		echo
 	fi
+else
+	echo "${b}All done!${x}"
+	echo
+	echo "${g}${b}You can now log in on:${x}"
+	echo
+	echo "${b}  http://$hostname:8080${x}"
+	echo
+	echo "${b}  |  user: $runtimeuser${x}"
+	echo
+	echo "${b}  |  pass: $genpw${x}"
+	echo
 fi
 
 
